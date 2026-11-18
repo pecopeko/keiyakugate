@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>KEIYAKUGATE（契約門）：業務委託・下請法60日・賠償上限・印紙税 ブラウザローカル監査</title>
+  <meta name="description" content="100%ブラウザローカル処理で業務委託・請負契約書の下請法60日規制、フリーランス新法3条明示事項、無制限賠償、著作権27/28条、印紙税（紙 vs 電子）を社外送信ゼロで監査。">
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <header class="topbar" data-ui="bar">
+    <div class="wrap topbar__inner">
+      <div class="brand">
+        <span class="brand__seal" aria-hidden="true">契</span>
+        <div>
+          <strong class="brand__name">KEIYAKUGATE 契約門</strong>
+          <span class="brand__sub">100% ブラウザローカル処理 / 契約書データの外部送信ゼロ</span>
+        </div>
+      </div>
+      <nav class="nav" aria-label="主要機能">
+        <a href="#contract-auditor">条文リスク監査</a>
+        <a href="#stamp-calculator">印紙税試算</a>
+        <a href="#redline-export">対案出力</a>
+        <a class="btn-outline" href="https://github.com/pecopeko/horizon-money-studio/releases/tag/v1.0.0-pro-kit" target="_blank" rel="noopener">商務Pro版キット</a>
+        <a class="btn-primary" href="https://github.com/sponsors/pecopeko" target="_blank" rel="noopener">開発支援 Sponsors</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section class="intro">
+      <h1>業務委託・NDAの不利条項と印紙税を、社外送信ゼロで即時点検。</h1>
+      <p class="intro__lead">
+        取引先から提示されたドラフトを下請法・フリーランス保護新法（60日支払サイト・3条明示義務）、損害賠償上限の欠如、著作権法第27条・第28条、過度な競業避止、自動更新ロックイン、紙契約と電子契約の印紙税差額まで端末内のみで解析し、対案条項を生成します。
+      </p>
+    </section>
+
+    <section id="contract-auditor" class="panel" data-ui="auditor">
+      <div class="panel__head">
+        <h2>契約書・業務委託ドラフト監査</h2>
+        <div class="preset-group">
+          <button type="button" id="loadRiskySampleBtn" class="chip">要警戒サンプルを読込</button>
+          <button type="button" id="loadSafeSampleBtn" class="chip">均衡モデル案を読込</button>
+        </div>
+      </div>
+      <label class="field">
+        <span>監査対象の契約書本文（ブラウザから外部へ送信されません）</span>
+        <textarea id="contractTextInput" rows="8" placeholder="業務委託基本契約書や個別契約書の本文を貼り付けてください。"></textarea>
+      </label>
+      <div class="grid-3">
+        <label class="field">
+          <span>請負・委託総額（円・空欄で本文自動抽出）</span>
+          <input type="number" id="amountYenInput" min="0" step="10000" placeholder="例: 3500000">
+        </label>
+        <label class="field">
+          <span>文書区分</span>
+          <select id="docTypeSelect">
+            <option value="auto">本文から自動判定</option>
+            <option value="type2">第2号文書（請負・開発委託）</option>
+            <option value="type7">第7号文書（継続的基本契約）</option>
+            <option value="non_taxable_mandate">準委任のみ（不課税判定）</option>
+          </select>
+        </label>
+        <label class="field">
+          <span>締結方式</span>
+          <select id="signingModeSelect">
+            <option value="electronic">電子契約（電子署名・PDF）</option>
+            <option value="paper">書面契約（紙・押印）</option>
+          </select>
+        </label>
+      </div>
+      <div class="actions">
+        <button type="button" id="runAuditBtn" class="btn-primary">リスク条項と印紙税を監査</button>
+        <button type="button" id="copyRedlineBtn" class="btn-outline">修正対案マークダウンをコピー</button>
+      </div>
+      <div id="auditSummaryBox" class="status-box"></div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>深刻度</th>
+              <th>根拠法令・論点</th>
+              <th>検知箇所</th>
+              <th>修正対案条項</th>
+            </tr>
+          </thead>
+          <tbody id="findingsTableBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="stamp-calculator" class="panel" data-ui="stamptax">
+      <div class="panel__head">
+        <h2>紙契約 vs 電子契約 印紙税対照表</h2>
+        <span id="stampBracketLabel" class="hint-inline">判定待機中</span>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>区分</th>
+              <th>推定根拠</th>
+              <th class="num">紙契約印紙税</th>
+              <th class="num">電子契約</th>
+              <th class="num">削減可能額</th>
+            </tr>
+          </thead>
+          <tbody id="stampTaxTableBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="redline-export" class="panel" data-ui="redline">
+      <div class="panel__head">
+        <h2>取引先提示用 修正依頼ドラフト（Markdown）</h2>
+        <button type="button" id="downloadRedlineBtn" class="btn-outline">対案ノート (.md) を保存</button>
+      </div>
+      <pre id="redlinePreview" class="code-box"></pre>
+    </section>
+
+    <section class="panel ext-box" data-ui="kit">
+      <div>
+        <h2>オフライン配布キット v1.0.0 ＆ 関連業務ゲート</h2>
+        <p>社内法務・総務の閉域PCでも動作する静的HTML/ESMパッケージ一式と関連コンプライアンスツールを公開しています。</p>
+      </div>
+      <div class="actions">
+        <a class="btn-primary" href="https://github.com/pecopeko/keiyakugate/releases/download/v1.0.0/keiyakugate-offline-kit-v1.0.0.zip">オフラインZIPを保存</a>
+        <a class="btn-outline" href="https://pecopeko.github.io/kurogate/" target="_blank" rel="noopener">KUROGATE（黒塗門）</a>
+        <a class="btn-outline" href="https://pecopeko.github.io/zengingate/" target="_blank" rel="noopener">ZENGINGATE（全銀門）</a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="wrap footer__inner">
+      <span>KEIYAKUGATE（契約門）：100%ローカル処理・契約書データの外部送信なし（一般的な法務点検支援であり個別法律相談ではありません）</span>
+      <span><a href="https://github.com/pecopeko/keiyakugate" target="_blank" rel="noopener">GitHub pecopeko/keiyakugate</a></span>
+    </div>
+  </footer>
+
+  <script type="module" src="./app.mjs"></script>
+</body>
+</html>
